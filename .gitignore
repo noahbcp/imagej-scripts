@@ -1,0 +1,14 @@
+*
+
+# Clearlist
+!*.ijm
+!*.md
+!*/
+!.gitignore
+!LICENSE
+!citation.cff
+
+# Blocklist
+/imports/
+/utils/plot_multicolour.ijm
+/mercenary/
