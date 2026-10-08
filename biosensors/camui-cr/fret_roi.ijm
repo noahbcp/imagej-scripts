@@ -70,10 +70,12 @@ macro "FRET ROI Measurement" {
 		auto_roi = getBoolean("Use which ROI Method?", "Auto (Otsu)", "Manual");
 		
 		if (auto_roi == false) {
+			run("Z Project...", "projection=[Average Intensity]");
 			setTool("freehand");
 			roiManager("reset");
 	  		roiManager("show all with labels");
 			waitForUser("Add ROIs to the image and the ROI Manager (t) then click OK.");
+			close();
 			}
 		}
 	
