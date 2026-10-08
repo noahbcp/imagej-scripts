@@ -77,7 +77,7 @@ macro "FRET ROI Measurement" {
 			waitForUser("Add ROIs to the image and the ROI Manager (t) then click OK.");
 			close();
 			} else {
-				min_roi_area = getNumber("Minimum ROI area? (microns)", 10)
+				min_roi_area = getNumber("Minimum ROI area? (microns)", 10);
 			}
 		}
 	
