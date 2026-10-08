@@ -76,6 +76,8 @@ macro "FRET ROI Measurement" {
 	  		roiManager("show all with labels");
 			waitForUser("Add ROIs to the image and the ROI Manager (t) then click OK.");
 			close();
+			} else {
+				min_roi_area = getNumber("Minimum ROI area? (microns)", 10)
 			}
 		}
 	
@@ -132,9 +134,11 @@ macro "FRET ROI Measurement" {
 		roiManager("reset");
 		selectImage(donor_id);
 		run("Duplicate...", "duplicate title=donor_threshold");
-		treshold_id = getImageID();
-		selectImage(treshold_id);
+		threshold_id = getImageID();
+		selectImage(threshold_id);
 		run("Auto Threshold", "method=Otsu white stack");
+		run("Analyze Particles...", "size=" + min_roi_area + "-Infinity show=Masks stack");
+		run("Invert", "stack");
 		for (f = frame_start; f <= frame_end; f++) {
 			setSlice(f);
 			run("Median", "radius=10"); // Helps smooth out masks produced by poor auto-thresholding.
