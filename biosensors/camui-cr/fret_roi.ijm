@@ -139,11 +139,22 @@ macro "FRET ROI Measurement" {
 		run("Auto Threshold", "method=Otsu white stack use_stack_histogram");
 		run("Analyze Particles...", "size=" + min_roi_area + "-Infinity show=Masks stack");
 		run("Invert", "stack");
+		frame_roi_idx = newArray(frame_end + 1);
 		for (f = frame_start; f <= frame_end; f++) {
+			frame_roi_idx[f] = -1;
 			setSlice(f);
 			run("Median", "radius=10"); // Helps smooth out masks produced by poor auto-thresholding.
 			run("Create Selection");
+			if (selectionType() == -1) {
+				run("Select None");
+				continue; // no usable ROI for this frame
+			}
 			roiManager("add");
+			run("Select None");
+			frame_roi_idx[f] = roiManager("count") - 1;
+		}
+		if (roiManager("count") == 0) {
+			exit("No ROIs were detected in " + img_name + ".\nTry lowering the minimum ROI area, or use manual ROIs.");
 		}
 	}
 
@@ -175,6 +186,12 @@ macro "FRET ROI Measurement" {
 	// Donor
 	selectImage(donor_id);
 	for (f = frame_start; f <= frame_end; f++) {
+		// ROI Manager index for this frame's auto-generated ROI (-1 if none); unused in manual mode.
+		if (auto_roi) {
+			roi_idx = frame_roi_idx[f];
+			} else {
+				roi_idx = 0;
+			}
 		if (auto_roi == false) {
 		    // Measure all ROIs, appending to Results table.
 		    for (i = 0; i < roi_count; i++) {
@@ -183,8 +200,8 @@ macro "FRET ROI Measurement" {
 		        roiManager("Update");
 		        roiManager("Measure");
 	    	}
-		} else {
-			roiManager("Select", f - 1); //1st ROI in manager is index = 0 so need to correct this.
+		} else if (roi_idx >= 0) {
+			roiManager("Select", roi_idx); //1st ROI in manager is index = 0 so need to correct this.
 			Stack.setFrame(f);
 			roiManager("Update");
 			roiManager("Measure");
@@ -194,7 +211,11 @@ macro "FRET ROI Measurement" {
 	    base = (f - frame_start) * roi_count;
 	    for (i = 0; i < roi_count; i++) {
 	        idx = base + i;
-	        donor_df[idx] = getResult("Mean", i);
+	        if (auto_roi && roi_idx < 0) {
+	    		donor_df[idx] = NaN; // no ROI for this frame
+	    		} else {
+	    			donor_df[idx] = getResult("Mean", i);
+	    		}
 	        frame_df[idx] = f;
 	        roi_df[idx] = i + 1;
 	        name_df[idx] = img_name;
@@ -210,6 +231,11 @@ macro "FRET ROI Measurement" {
 	// Acceptor
 	selectImage(acceptor_id);
 	for (f = frame_start; f <= frame_end; f++) {
+		if (auto_roi) {
+			roi_idx = frame_roi_idx[f];
+			} else {
+				roi_idx = 0;
+			}
 		if (auto_roi == false) {
 			for (i = 0; i < roi_count; i++) {
 		        roiManager("Select", i);
@@ -217,8 +243,8 @@ macro "FRET ROI Measurement" {
 		        roiManager("Update");
 		        roiManager("Measure");
 	    	}
-		} else {
-			roiManager("Select", f - 1);
+		} else if (roi_idx >= 0) {
+			roiManager("Select", roi_idx);
 			Stack.setFrame(f);
 			roiManager("Update");
 			roiManager("Measure");
@@ -227,7 +253,11 @@ macro "FRET ROI Measurement" {
 	    base = (f - frame_start) * roi_count;
 	    for (i = 0; i < roi_count; i++) {
 	        idx = base + i;
-	        acceptor_df[idx] = getResult("Mean", i);
+	        if (auto_roi && roi_idx < 0) {
+	    		acceptor_df[idx] = NaN;
+	    		} else {
+	    			acceptor_df[idx] = getResult("Mean", i);
+	    		}
 	    }
 		run("Clear Results");
 	}
@@ -235,6 +265,11 @@ macro "FRET ROI Measurement" {
 	// FRET
 	selectImage(fret_id);
 	for (f = frame_start; f <= frame_end; f++) {
+		if (auto_roi) {
+			roi_idx = frame_roi_idx[f];
+			} else {
+				roi_idx = 0;
+			}
 		if (auto_roi == false) {
 			for (i = 0; i < roi_count; i++) {
 		        roiManager("Select", i);
@@ -242,8 +277,8 @@ macro "FRET ROI Measurement" {
 		        roiManager("Update");
 		        roiManager("Measure");
 	    	}
-		} else {
-			roiManager("Select", f - 1);
+		} else if (roi_idx >= 0) {
+			roiManager("Select", roi_idx);
 			Stack.setFrame(f);
 			roiManager("Update");
 			roiManager("Measure");
@@ -252,7 +287,11 @@ macro "FRET ROI Measurement" {
 	    base = (f - frame_start) * roi_count;
 	    for (i = 0; i < roi_count; i++) {
 	        idx = base + i;
-	        fret_df[idx] = getResult("Mean", i);
+	        if (auto_roi && roi_idx < 0) {
+	    		fret_df[idx] = NaN;
+	    		} else {
+	    			fret_df[idx] = getResult("Mean", i);
+	    		}
 	    }
 	    run("Clear Results");
 	}
@@ -266,8 +305,12 @@ macro "FRET ROI Measurement" {
 	// Crops movie to ROIs only if automated ROIs are generated.
 	if (auto_roi) {
 		for (i = 0; i < frames; i++) {
+			roi_idx = frame_roi_idx[frame_start + i];
+			if (roi_idx < 0) {
+				continue; // keep this frame uncropped (no ROI)
+			}
 			selectImage(fret_calc);
-		    roiManager("select", i);        // ROIs are 0-based
+		    roiManager("select", roi_idx);        // ROIs are 0-based
 		    setSlice(i + 1);                  // slices are 1-based
 		    run("Clear Outside", "slice");           // keep only inside the ROI
 		    run("Select None");
