@@ -136,7 +136,7 @@ macro "FRET ROI Measurement" {
 		run("Duplicate...", "duplicate title=donor_threshold");
 		threshold_id = getImageID();
 		selectImage(threshold_id);
-		run("Auto Threshold", "method=Otsu white stack");
+		run("Auto Threshold", "method=Otsu white stack use_stack_histogram");
 		run("Analyze Particles...", "size=" + min_roi_area + "-Infinity show=Masks stack");
 		run("Invert", "stack");
 		for (f = frame_start; f <= frame_end; f++) {
