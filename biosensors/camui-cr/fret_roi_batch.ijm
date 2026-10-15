@@ -35,7 +35,7 @@ macro "FRET ROI Measurement (BATCH)" {
 	}
 
 for (openFile = 0; openFile < list.length; openFile++) {
-    if (endsWith(list[openFile], ".czi")) {
+    if (endsWith(list[openFile], ".czi") | endsWith(list[openFile], ".tif")) {
     		run("Bio-Formats Importer", "open=[" + inputDir + list[openFile] + "] autoscale color_mode=Colorized view=Hyperstack stack_order=XYCZT");
 			// Init.
 			img_name = getInfo("image.filename");
@@ -116,7 +116,7 @@ for (openFile = 0; openFile < list.length; openFile++) {
 				for (f = frame_start; f <= frame_end; f++) {
 					frame_roi_idx[f] = -1;
 					setSlice(f);
-					run("Median", "radius=10"); // Helps smooth out masks produced by poor auto-thresholding.
+//					run("Median", "radius=10"); // Helps smooth out masks produced by poor auto-thresholding.
 					run("Create Selection");
 					if (selectionType() == -1) {
 						run("Select None");
