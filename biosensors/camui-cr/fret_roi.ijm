@@ -20,6 +20,7 @@ macro "FRET ROI Measurement" {
 			close("\\Others");
 			}
 	}
+	run("Set Measurements...", "area mean min redirect=None decimal=3"); // Validate environment.
 	img_name = getInfo("image.filename");
 	Stack.getDimensions(width, height, n_channels, n_slices, n_frames);
 	Stack.getPosition(channel, zstack, frame);

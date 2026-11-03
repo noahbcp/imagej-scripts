@@ -34,6 +34,7 @@ macro "FRET ROI Measurement (BATCH)" {
 	}
 	gaussian_sigma = getNumber("Sigma radius (Gaussian blur):", 0.25);
 	exportMode = getBoolean("Export FRET images?");
+	run("Set Measurements...", "area mean min redirect=None decimal=3"); // Validate environment.
 	
 	// Write header only once (if file doesn't exist). All files are measured
 	// frame-by-frame (single-frame files simply produce one row), so the
